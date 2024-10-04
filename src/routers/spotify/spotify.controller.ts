@@ -21,28 +21,42 @@ interface ITokenObj {
 @Controller('spotify')
 @Injectable()
 export class SpotifyController {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache, private spotifyService: SpotifyService) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private spotifyService: SpotifyService,
+  ) {}
 
   @Get('search?')
   async search(@Query('query') query: string): Promise<Response> {
-    const refreshToken = await this.cacheManager.get('spotifyRefresh') as string | null;
+    const refreshToken = (await this.cacheManager.get('spotifyRefresh')) as
+      | string
+      | null;
     let accessToken = JSON.parse(
-      await this.cacheManager.get('spotifyAccess') ?? "{}",
+      (await this.cacheManager.get('spotifyAccess')) ?? '{}',
     ) as ITokenObj;
 
     if (!accessToken.token || !refreshToken) {
       throw new InternalServerErrorException('Server Error', {
         description: 'No Token Stored',
       });
-    } else if (Math.floor(accessToken.storedAt / 1000) < Math.floor(Date.now() / 1000) - 3600) {
-      accessToken = await this.spotifyService.refreshTokens(refreshToken, this.cacheManager)
+    } else if (
+      Math.floor(accessToken.storedAt / 1000) <
+      Math.floor(Date.now() / 1000) - 3600
+    ) {
+      accessToken = await this.spotifyService.refreshTokens(
+        refreshToken,
+        this.cacheManager,
+      );
     }
-      
-    const response = await fetch(`https://api.spotify.com/v1/search?q=${query}&type=track&limit=10`, {
-      headers: {
-        'Authorization': 'Bearer ' + accessToken.token,
+
+    const response = await fetch(
+      `https://api.spotify.com/v1/search?q=${query}&type=track&limit=10`,
+      {
+        headers: {
+          Authorization: 'Bearer ' + accessToken.token,
+        },
       },
-    });
+    );
 
     if (response.status == 401) {
       throw new InternalServerErrorException('Server Error', {
@@ -58,15 +72,73 @@ export class SpotifyController {
         artists: track.artists,
         track: track.name,
         album_covers: track.album.images,
-        spotifyId: track.id
-      })
+        spotifyId: track.id,
+      });
     }
 
     return {
       statusCode: 200,
       message: {
         data: filteredTracks,
-        query: query
+        query: query,
+      },
+    };
+  }
+
+  @Get('topTracks')
+  async topTracks() {
+    const refreshToken = (await this.cacheManager.get('spotifyRefresh')) as
+      | string
+      | null;
+    let accessToken = JSON.parse(
+      (await this.cacheManager.get('spotifyAccess')) ?? '{}',
+    ) as ITokenObj;
+
+    if (!accessToken.token || !refreshToken) {
+      throw new InternalServerErrorException('Server Error', {
+        description: 'No Token Stored',
+      });
+    } else if (
+      Math.floor(accessToken.storedAt / 1000) <
+      Math.floor(Date.now() / 1000) - 3600
+    ) {
+      accessToken = await this.spotifyService.refreshTokens(
+        refreshToken,
+        this.cacheManager,
+      );
+    }
+
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term`,
+      {
+        headers: {
+          Authorization: 'Bearer ' + accessToken.token,
+        },
+      },
+    );
+
+    if (response.status == 401) {
+      throw new InternalServerErrorException('Server Error', {
+        description: 'Invalid Response from Spotify',
+      });
+    }
+
+    const data = await response.json();
+    const filteredTracks = [];
+    
+    for (const track of data.items) {
+      filteredTracks.push({
+        artists: track.artists,
+        track: track.name,
+        album_covers: track.album.images,
+        spotifyId: track.id,
+      });
+    }
+
+    return {
+      statusCode: 200,
+      message: {
+        data: filteredTracks,
       },
     };
   }
@@ -74,13 +146,12 @@ export class SpotifyController {
   @Get('login')
   @Redirect()
   async login() {
-    const redirectUrl = 'http://localhost:3000/spotify/callback';
-    const scopes = ['user-top-read'];
+    const redirectUrl = env.CALLBACK_URL;
     const searchParams = new URLSearchParams({
       client_id: env.SPOTIFY_CLIENT_ID,
       response_type: 'code',
       redirect_uri: redirectUrl,
-      scopes: scopes.join(','),
+      scope: 'user-top-read',
     });
     const spotifyLoginURL =
       'https://accounts.spotify.com/authorize?' + searchParams;
@@ -121,6 +192,19 @@ export class SpotifyController {
 
       if (!response.ok) {
         throw new Error(data.error_description || 'Token request failed');
+      }
+
+      const response2 = await fetch('https://api.spotify.com/v1/me', {
+        headers: {
+          Authorization: `Bearer ${data.access_token}`,
+        },
+      });
+      const data2 = await response2.json();
+
+      if (data2.id !== env.SPOTIFY_USER_ID) {
+        throw new BadRequestException('Invalid User', {
+          description: 'You are not authorized to sign into this service.',
+        });
       }
 
       await this.cacheManager.set('spotifyRefresh', data.refresh_token, 0);
