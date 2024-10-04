@@ -17,19 +17,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     RandomModule,
     SpotifyModule,
     CacheModule.register<RedisClientOptions>({
+      // Unsure why I have to do this, types are stupid :(
       // @ts-ignore
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async () => ({
-        store: await redisStore({
-          ttl: 0,
-          socket: {
-            host: env.REDIS_HOST,
-            port: Number(env.REDIS_PORT),
-            passphrase: env.REDIS_PASSWORD,
-          },
-        }),
-      }),
+      url: env.REDIS_URL,
+      store: redisStore,
       isGlobal: true,
     }),
     ConfigModule.forRoot({
@@ -44,4 +37,5 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     },
   ],
 })
+
 export class AppModule {}

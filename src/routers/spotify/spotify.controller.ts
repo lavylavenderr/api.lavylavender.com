@@ -1,31 +1,72 @@
 import {
   BadRequestException,
   Controller,
+  InternalServerErrorException,
   Get,
   Inject,
-  Param,
   Query,
   Redirect,
-  Req,
+  Injectable,
 } from '@nestjs/common';
 import { Response } from 'src/interfaces/response.interface';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { env } from 'src/lib/env';
+import { SpotifyService } from './spotify.service';
+
+interface ITokenObj {
+  token: string;
+  storedAt: number;
+}
 
 @Controller('spotify')
+@Injectable()
 export class SpotifyController {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache, private spotifyService: SpotifyService) {}
 
   @Get('search?')
   async search(@Query('query') query: string): Promise<Response> {
-    await this.cacheManager.set('lavender', 'foxxo', 0);
-    const testVal = await this.cacheManager.get('lavender');
+    const refreshToken = await this.cacheManager.get('spotifyRefresh') as string | null;
+    let accessToken = JSON.parse(
+      await this.cacheManager.get('spotifyAccess') ?? "{}",
+    ) as ITokenObj;
+
+    if (!accessToken.token || !refreshToken) {
+      throw new InternalServerErrorException('Server Error', {
+        description: 'No Token Stored',
+      });
+    } else if (Math.floor(accessToken.storedAt / 1000) < Math.floor(Date.now() / 1000) - 3600) {
+      accessToken = await this.spotifyService.refreshTokens(refreshToken, this.cacheManager)
+    }
+      
+    const response = await fetch(`https://api.spotify.com/v1/search?q=${query}&type=track&limit=10`, {
+      headers: {
+        'Authorization': 'Bearer ' + accessToken.token,
+      },
+    });
+
+    if (response.status == 401) {
+      throw new InternalServerErrorException('Server Error', {
+        description: 'Invalid Response from Spotify',
+      });
+    }
+
+    const data = await response.json();
+    const filteredTracks = [];
+
+    for (const track of data.tracks.items) {
+      filteredTracks.push({
+        artists: track.artists,
+        track: track.name,
+        album_covers: track.album.images,
+        spotifyId: track.id
+      })
+    }
 
     return {
       statusCode: 200,
       message: {
-        cacheManager: testVal,
-        query: query,
+        data: filteredTracks,
+        query: query
       },
     };
   }
@@ -57,7 +98,7 @@ export class SpotifyController {
       });
     }
 
-    const redirectUrl = 'http://localhost:3000/spotify/callback';
+    const redirectUrl = env.CALLBACK_URL;
     const encodedCredentials = btoa(
       `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_SECRET}`,
     );
@@ -82,8 +123,15 @@ export class SpotifyController {
         throw new Error(data.error_description || 'Token request failed');
       }
 
-      await this.cacheManager.set('spotifyAccess', data.access_token, 0);
       await this.cacheManager.set('spotifyRefresh', data.refresh_token, 0);
+      await this.cacheManager.set(
+        'spotifyAccess',
+        JSON.stringify({
+          token: data.access_token,
+          storedAt: Date.now(),
+        }),
+        0,
+      );
 
       return {
         statusCode: 200,
