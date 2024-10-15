@@ -10,12 +10,14 @@ import { SpotifyModule } from './routers/spotify/spotify.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { env } from './lib/env';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BadgeModule } from './routers/badge/badge.module';
 
 @Module({
   imports: [
     PhoneModule,
     RandomModule,
     SpotifyModule,
+    BadgeModule,
     CacheModule.register<RedisClientOptions>({
       // Unsure why I have to do this, types are stupid :(
       // @ts-ignore

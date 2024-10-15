@@ -11,6 +11,7 @@ const envSchema = z.object({
   SPOTIFY_SECRET: z.string(),
   REDIS_URL: z.string(),
   CALLBACK_URL: z.string(),
+  DISCORD_ID: z.string(),
   PORT: z.string().or(z.number()).default(3000)
 });
 
