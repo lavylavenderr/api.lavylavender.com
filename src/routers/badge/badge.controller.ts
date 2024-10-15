@@ -14,7 +14,6 @@ export class BadgeController {
     const body = await response.json();
 
     return {
-      statusCode: 200,
       schemaVersion: 1,
       namedLogo: 'spotify',
       logoColor: 'white',
@@ -46,7 +45,6 @@ export class BadgeController {
     }
 
     return {
-      statusCode: 200,
       schemaVersion: 1,
       color,
       label: 'currently',
@@ -74,7 +72,6 @@ export class BadgeController {
     }
 
     return {
-      statusCode: 200,
       schemaVersion: 1,
       color: '5865F2',
       label: 'playing',
