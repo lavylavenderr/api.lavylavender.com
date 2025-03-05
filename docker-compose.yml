@@ -1,0 +1,36 @@
+name: api.lavylavender.com
+
+services:
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "29022:3000"
+    env_file:
+      - stack.env
+    command: >
+      sh -c "pnpm run start:prod"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    container_name: redis
+    image: redis:6.2-alpine
+    restart: always
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  redisdata:
