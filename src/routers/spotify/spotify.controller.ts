@@ -222,6 +222,7 @@ export class SpotifyController {
         message: 'Successfully logged in.',
       };
     } catch (error) {
+      console.log(error)
       return {
         statusCode: 500,
         message: error.message || 'Invalid Response from Token Server',
