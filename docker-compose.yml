@@ -20,18 +20,20 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    labels:
+    deploy:
+      labels:
         - traefik.enable=true
         - traefik.constraint-label=traefik-public
         - traefik.docker.network=traefik-public
+        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
 
         - traefik.http.services.api.loadbalancer.server.port=4000
         - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
-        - traefik.http.routers.my-router.middlewares=https-redirect@swarm
+        - traefik.http.routers.traefik-public-http.entrypoints=http
+        - traefik.http.routers.traefik-public-http.middlewares=https-redirect
+        - traefik.http.routers.traefik-public-https.entrypoints=https
         - traefik.http.routers.api.service=api
-      
-        
-        
 
   redis:
     container_name: redis
