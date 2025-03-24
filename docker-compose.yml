@@ -23,11 +23,11 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
-      - traefik.http.routers.api.entrypoints=https
-      - traefik.http.routers.traefik-public-https.tls.certresolver=letsencrypt
-      - traefik.http.routers.api.tls=true
-      - traefik.http.services.api.loadbalancer.server.port=4000
+      - traefik.http.routers.personalapi.rule=Host(`api.lavylavender.com`)
+      - traefik.http.routers.personalapi.entrypoints=https
+      - traefik.http.routers.personalapi.tls.certresolver=letsencrypt
+      - traefik.http.routers.personalapi.tls=true
+      - traefik.http.services.personalapi.loadbalancer.server.port=4000
 
   redis:
     image: redis:6.2-alpine
