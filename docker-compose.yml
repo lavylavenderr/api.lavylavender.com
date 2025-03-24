@@ -16,7 +16,7 @@ services:
       - intranet
       - traefik-public
     depends_on:
-      redis:
+      - redis:
         condition: service_healthy
     deploy:
       replicas: 2
