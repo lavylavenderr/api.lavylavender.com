@@ -50,5 +50,5 @@ volumes:
 networks:
   intranet:
     driver: bridge
-  traefik-public:
+  traefik-net:
     external: true
