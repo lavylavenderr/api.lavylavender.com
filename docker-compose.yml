@@ -17,7 +17,7 @@ services:
       - SPOTIFY_USER_ID=${SPOTIFY_USER_ID}
     networks:
       - intranet
-      - traefik-public
+      - traefik-net
     depends_on:
       - redis
     labels:
