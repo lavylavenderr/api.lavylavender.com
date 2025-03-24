@@ -20,21 +20,14 @@ services:
       - traefik-public
     depends_on:
       - redis
-    deploy:
-      replicas: 2
-      placement:
-        constraints:
-          - node.role == worker
-      labels:
-        - traefik.enable=true
-        - traefik.docker.network=traefik-public
-        - traefik.http.services.api.loadbalancer.server.port=4000
-        - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
-        - traefik.http.routers.api.entrypoints=http
-        - traefik.http.routers.api.middlewares=https-redirect
-        - traefik.http.routers.api.entrypoints=https
-        - traefik.http.routers.traefik-public-https.tls.certresolver=le
-        - traefik.http.routers.api.tls=true
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
+      - traefik.http.routers.api.entrypoints=https
+      - traefik.http.routers.traefik-public-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.api.tls=true
+      - traefik.http.services.api.loadbalancer.server.port=4000
 
   redis:
     image: redis:6.2-alpine
