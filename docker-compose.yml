@@ -6,21 +6,32 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "29022:3000"
     env_file:
       - stack.env
     command: >
       sh -c "pnpm run start:prod"
     environment:
-      - REDIS_URL=redis://redis:6379
-      - PORT=3000
+      - REDIS_URL=redis://redis:6379/0
+      - PORT=4000
     networks:
       - intranet
+      - traefik-public
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.constraint-label=traefik-public
+        - traefik.docker.network=traefik-public
+
+        - traefik.http.services.api.loadbalancer.server.port=4000
+        - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
+        - traefik.http.routers.my-router.middlewares=https-redirect@swarm
+        - traefik.http.routers.api.service=api
+        
+        
 
   redis:
     container_name: redis
