@@ -24,16 +24,16 @@ services:
       labels:
         - traefik.enable=true
         - traefik.constraint-label=traefik-public
-        - traefik.docker.network=traefik-public
+        - traefik.swarm.network=traefik-public
         - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
         - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
 
-        - traefik.http.services.api.loadbalancer.server.port=4000
-        - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
-        - traefik.http.routers.traefik-public-http.entrypoints=http
-        - traefik.http.routers.traefik-public-http.middlewares=https-redirect
-        - traefik.http.routers.traefik-public-https.entrypoints=https
-        - traefik.http.routers.api.service=api
+        - traefik.http.services.personal-api.loadbalancer.server.port=4000
+        - traefik.http.routers.personal-api.rule=Host(`api.lavylavender.com`)
+        - traefik.http.routers.personal-api.entrypoints=http
+        - traefik.http.routers.personal-api.middlewares=https-redirect
+        - traefik.http.routers.personal-api.entrypoints=https
+        - traefik.http.routers.personal-api.service=api
 
   redis:
     container_name: redis
