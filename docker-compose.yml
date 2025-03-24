@@ -3,13 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file:
-      - stack.env
     command: >
       sh -c "pnpm run start:prod"
     environment:
       - REDIS_URL=redis://redis:6379/0
       - PORT=4000
+      - AUTHORIZATION_KEY=${AUTHORIZATION_KEY}
+      - CALLBACK_URL=${CALLBACK_URL}
+      - DISCORD_ID=${DISCORD_ID}
+      - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_SECRET=${SPOTIFY_SECRET}
+      - SPOTIFY_USER_ID=${SPOTIFY_USER_ID}
     networks:
       - intranet
       - traefik-public
