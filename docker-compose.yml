@@ -49,7 +49,6 @@ volumes:
 
 networks:
   intranet:
-    driver: overlay
-    attachable: true
+    driver: bridge
   traefik-public:
     external: true
