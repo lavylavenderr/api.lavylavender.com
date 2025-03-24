@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   api:
-    image: yourusername/api:latest
+    image: ghcr.io/lavylavenderr/personal-api:latest
     command: >
       sh -c "pnpm run start:prod"
     environment:
