@@ -1,8 +1,8 @@
+version: "3.9"
+
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: yourusername/api:latest
     command: >
       sh -c "pnpm run start:prod"
     environment:
@@ -30,12 +30,13 @@ services:
         - traefik.docker.network=traefik-public
         - traefik.http.services.api.loadbalancer.server.port=4000
         - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
+        - traefik.http.routers.api.entrypoints=http
+        - traefik.http.routers.api.middlewares=https-redirect
         - traefik.http.routers.api.entrypoints=https
         - traefik.http.routers.api.tls=true
 
   redis:
     image: redis:6.2-alpine
-    restart: always
     networks:
       - intranet
     volumes:
@@ -45,6 +46,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      restart_policy:
+        condition: on-failure
 
 volumes:
   redisdata:
