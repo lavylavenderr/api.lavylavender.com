@@ -1,5 +1,3 @@
-name: api.lavylavender.com
-
 services:
   api:
     build:
