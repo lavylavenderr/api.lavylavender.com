@@ -22,7 +22,7 @@ services:
       - redis
     labels:
       - traefik.enable=true
-      - traefik.docker.network=traefik-public
+      - traefik.docker.network=traefik-net
       - traefik.http.routers.personalapi.rule=Host(`api.lavylavender.com`)
       - traefik.http.routers.personalapi.entrypoints=https
       - traefik.http.routers.personalapi.tls.certresolver=letsencrypt
