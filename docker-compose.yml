@@ -2,7 +2,6 @@ name: api.lavylavender.com
 
 services:
   api:
-    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
@@ -19,24 +18,20 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    restart: unless-stopped
     deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       labels:
         - traefik.enable=true
-        - traefik.constraint-label=traefik-public
-        - traefik.swarm.network=traefik-public
-        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-
-        - traefik.http.services.personal-api.loadbalancer.server.port=4000
-        - traefik.http.routers.personal-api.rule=Host(`api.lavylavender.com`)
-        - traefik.http.routers.personal-api.entrypoints=http
-        - traefik.http.routers.personal-api.middlewares=https-redirect
-        - traefik.http.routers.personal-api.entrypoints=https
-        - traefik.http.routers.personal-api.service=api
+        - traefik.docker.network=traefik-public
+        - traefik.http.services.api.loadbalancer.server.port=4000
+        - traefik.http.routers.api.rule=Host(`api.lavylavender.com`)
+        - traefik.http.routers.api.entrypoints=https
+        - traefik.http.routers.api.tls=true
 
   redis:
-    container_name: redis
     image: redis:6.2-alpine
     restart: always
     networks:
@@ -52,9 +47,9 @@ services:
 volumes:
   redisdata:
 
-
 networks:
   intranet:
-    driver: bridge
+    driver: overlay
+    attachable: true
   traefik-public:
     external: true
